@@ -41,8 +41,35 @@
         
         .critic-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
             gap: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .critic-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 1.8em;
+            }
+            
+            .subtitle {
+                font-size: 0.9em;
+            }
+            
+            .preset-btn {
+                padding: 8px 16px;
+                font-size: 0.9em;
+            }
+            
+            .viz-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .chart-container {
+                height: 250px;
+            }
         }
         
         .critic-card {
@@ -156,6 +183,10 @@
         .preset-buttons {
             margin-bottom: 30px;
             text-align: center;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 5px;
         }
         
         .preset-btn {
@@ -327,6 +358,7 @@
             justify-content: center;
             margin-bottom: 20px;
             gap: 10px;
+            flex-wrap: wrap;
         }
         
         .tab-btn {
