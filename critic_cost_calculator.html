@@ -2,9 +2,9 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>MPPI 批评函数代价计算器</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" crossorigin="anonymous"></script>
     <style>
         * {
             margin: 0;
@@ -778,6 +778,16 @@
     </div>
     
     <script>
+        // 页面加载调试信息
+        console.log('页面开始加载...');
+        
+        // 检查 Chart.js 是否加载成功
+        if (typeof Chart === 'undefined') {
+            console.warn('Chart.js 加载失败，可视化功能将不可用');
+        } else {
+            console.log('Chart.js 加载成功');
+        }
+        
         const MODEL_DT = 0.05;
         let costCurveChart = null;
         let costPieChart = null;
@@ -1022,6 +1032,12 @@
         }
         
         function updateVizChart() {
+            // 检查 Chart.js 是否可用
+            if (typeof Chart === 'undefined') {
+                console.warn('Chart.js 未加载，跳过图表更新');
+                return;
+            }
+            
             const critic = document.getElementById('vizCriticSelect').value;
             
             // 生成曲线数据
@@ -1456,8 +1472,22 @@
             URL.revokeObjectURL(url);
         }
         
-        // Initialize
-        calculateAll();
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM加载完成，开始初始化...');
+            try {
+                calculateAll();
+                console.log('初始化完成');
+            } catch (e) {
+                console.error('初始化失败:', e);
+            }
+        });
+        
+        // 备用初始化（如果DOMContentLoaded已经触发）
+        if (document.readyState === 'complete' || document.readyState === 'interactive') {
+            console.log('页面已加载，直接初始化...');
+            setTimeout(calculateAll, 100);
+        }
     </script>
 </body>
 </html>
