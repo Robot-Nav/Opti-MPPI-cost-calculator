@@ -1,7 +1,7 @@
 {
-  "name": "mppi-cost-calculator",
+  "name": "Opti-MPPI-cost-calculator",
   "version": "1.0.0",
-  "description": "MPPI Critic Cost Calculator - An interactive online tool for calculating MPPI controller critic function costs",
+  "description": "Opti-MPPI Critic Cost Calculator - An interactive online tool for calculating MPPI controller critic function costs",
   "main": "index.html",
   "scripts": {
     "start": "npx serve .",
@@ -9,13 +9,13 @@
     "vercel-build": "echo 'Static site ready for deployment'"
   },
   "keywords": [
-    "MPPI",
+    "Opti-MPPI",
     "robotics",
     "motion-planning",
     "cost-calculator",
     "control-systems"
   ],
-  "author": "MPPI Controller Team",
+  "author": "Opti-MPPI Controller Team",
   "license": "MIT",
   "devDependencies": {
     "serve": "^14.2.0"
