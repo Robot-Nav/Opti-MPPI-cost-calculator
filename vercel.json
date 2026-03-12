@@ -1,21 +1,4 @@
 {
   "version": 2,
-  "name": "Opti-MPPI-cost-calculator",
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/critic_cost_calculator.html"
-    }
-  ],
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=0, must-revalidate"
-        }
-      ]
-    }
-  ]
+  "name": "Opti-MPPI-cost-calculator"
 }
