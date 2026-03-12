@@ -1,10 +1,10 @@
-# MPPI 批评函数代价计算器
+# Opti-MPPI 批评函数代价计算器
 
-一个交互式的在线工具，用于计算和分析 MPPI (Model Predictive Path Integral) 控制器中各批评函数的代价值。
+一个交互式的在线工具，用于计算和分析 Opti-MPPI (Optimized Model Predictive Path Integral) 控制器中各批评函数的代价值。
 
 ## 🌟 在线访问
 
-**网址**: [https://mppi-cost-calculator.vercel.app](https://mppi-cost-calculator.vercel.app)
+**网址**: [https://Opti-MPPI-cost-calculator.vercel.app](https://Opti-MPPI-cost-calculator.vercel.app)
 
 ## ✨ 功能特性
 
@@ -79,7 +79,7 @@ vercel --prod
 
 ## 🔗 相关链接
 
-- [MPPI Controller GitHub](https://github.com/your-repo/mppi-controller)
+- [Opti-MPPI GitHub](https://github.com/your-repo/Opti-MPPI-cost-calculator)
 - [Vercel 部署文档](https://vercel.com/docs)
 
 ## 📄 License
