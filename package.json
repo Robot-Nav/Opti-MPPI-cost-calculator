@@ -9,13 +9,14 @@
     "vercel-build": "echo 'Static site ready for deployment'"
   },
   "keywords": [
+    "MPPI",
     "Opti-MPPI",
     "robotics",
     "motion-planning",
     "cost-calculator",
     "control-systems"
   ],
-  "author": "Opti-MPPI Controller Team",
+  "author": "Opti-MPPI Team",
   "license": "MIT",
   "devDependencies": {
     "serve": "^14.2.0"
