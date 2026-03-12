@@ -79,7 +79,7 @@ vercel --prod
 
 ## 🔗 相关链接
 
-- [Opti-MPPI GitHub](https://github.com/your-repo/Opti-MPPI-cost-calculator)
+- [Opti-MPPI GitHub](https://github.com/Robot-Nav/OptiMPPI)
 - [Vercel 部署文档](https://vercel.com/docs)
 
 ## 📄 License
