@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "name": "mppi-cost-calculator",
+  "name": "Opti-MPPI-cost-calculator",
   "builds": [
     {
       "src": "package.json",
