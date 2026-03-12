@@ -1,4 +1,5 @@
 {
   "version": 2,
-  "name": "Opti-MPPI-cost-calculator"
+  "name": "Opti-MPPI-cost-calculator",
+  "outputDirectory": "."
 }
