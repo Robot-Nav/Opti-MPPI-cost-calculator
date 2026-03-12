@@ -1,0 +1,1431 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MPPI 批评函数代价计算器</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: rgba(255,255,255,0.9);
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+        
+        .critic-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+            gap: 20px;
+        }
+        
+        .critic-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .critic-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.25);
+        }
+        
+        .critic-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+        
+        .formula {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 8px;
+            font-family: 'Times New Roman', serif;
+            font-size: 1em;
+            color: #333;
+            margin-bottom: 15px;
+            overflow-x: auto;
+            border-left: 4px solid #667eea;
+        }
+        
+        .formula-math {
+            font-style: italic;
+        }
+        
+        .input-group {
+            margin-bottom: 12px;
+        }
+        
+        .input-group label {
+            display: block;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+        }
+        
+        .input-group input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+        
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .result {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            text-align: center;
+        }
+        
+        .result-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+        
+        .result-value {
+            font-size: 2em;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        
+        .total-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-top: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+        
+        .total-title {
+            font-size: 1.8em;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        
+        .total-value {
+            font-size: 4em;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .preset-buttons {
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .preset-btn {
+            background: white;
+            border: none;
+            padding: 12px 24px;
+            margin: 5px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #667eea;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+            font-size: 1em;
+        }
+        
+        .preset-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+        
+        .info-text {
+            font-size: 0.85em;
+            color: #888;
+            margin-top: 5px;
+        }
+        
+        /* 可视化区域样式 */
+        .viz-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-top: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .viz-title {
+            font-size: 1.5em;
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .viz-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 30px;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: 20px;
+        }
+        
+        .control-panel {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .control-panel h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .slider-container {
+            margin-bottom: 15px;
+        }
+        
+        .slider-container label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #555;
+        }
+        
+        .slider-container input[type="range"] {
+            width: 100%;
+            margin-bottom: 5px;
+        }
+        
+        .slider-value {
+            text-align: right;
+            color: #667eea;
+            font-weight: bold;
+        }
+        
+        .export-import-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-top: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+        
+        .action-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            margin: 10px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+        
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .sensitivity-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        .sensitivity-table th,
+        .sensitivity-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .sensitivity-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .sensitivity-bar {
+            height: 20px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            transition: width 0.3s;
+        }
+        
+        .cost-breakdown {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .cost-item {
+            background: #f8f9fa;
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .cost-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        
+        .tabs {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            gap: 10px;
+        }
+        
+        .tab-btn {
+            background: #f0f0f0;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .tab-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .highlight-card {
+            border: 3px solid #667eea;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(102, 126, 234, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(102, 126, 234, 0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 MPPI 批评函数代价计算器</h1>
+        <p class="subtitle">实时计算 · 可视化分析 · 参数调优</p>
+        
+        <div class="preset-buttons">
+            <button class="preset-btn" onclick="loadPreset('normal')">🚗 正常行驶</button>
+            <button class="preset-btn" onclick="loadPreset('avoidance')">⚠️ 避障模式</button>
+            <button class="preset-btn" onclick="loadPreset('goal')">🎯 接近目标</button>
+            <button class="preset-btn" onclick="loadPreset('spinning')">🔄 原地旋转</button>
+            <button class="preset-btn" onclick="loadPreset('narrow')">🚧 狭窄通道</button>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('calculator')">📱 计算器</button>
+            <button class="tab-btn" onclick="switchTab('visualization')">📊 可视化分析</button>
+            <button class="tab-btn" onclick="switchTab('sensitivity')">🔍 敏感性分析</button>
+        </div>
+        
+        <!-- 计算器标签页 -->
+        <div id="tab-calculator" class="tab-content active">
+            <div class="critic-grid">
+                <!-- 1. ObstaclesCritic -->
+                <div class="critic-card" id="card-obs">
+                    <div class="critic-title">1. ObstaclesCritic (障碍物代价)</div>
+                    <div class="formula">
+                        <div class="formula-math">
+                            d = d<sub>min</sub> - d<sub>margin</sub><br>
+                            cost = w<sub>rep</sub> · e<sup>-k·d</sup>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>排斥权重 w<sub>rep</sub></label>
+                        <input type="number" id="obs_w_rep" value="1.0" step="0.1" oninput="calculateAll()">
+                    </div>
+                    <div class="input-group">
+                        <label>代价缩放 k</label>
+                        <input type="number" id="obs_k" value="6.0" step="0.5" oninput="calculateAll()">
+                    </div>
+                    <div class="input-group">
+                        <label>碰撞边界 d<sub>margin</sub> (m)</label>
+                        <input type="number" id="obs_margin" value="0.4" step="0.05" oninput="calculateAll()">
+                    </div>
+                    <div class="input-group">
+                        <label>膨胀半径 d<sub>inflation</sub> (m)</label>
+                        <input type="number" id="obs_inflation" value="0.8" step="0.05" oninput="calculateAll()">
+                    </div>
+                    <div class="input-group">
+                        <label>到障碍物距离 d<sub>min</sub> (m)</label>
+                        <input type="number" id="obs_dist" value="0.6" step="0.05" oninput="calculateAll()">
+                    </div>
+                    <div class="result">
+                        <div class="result-label">代价值</div>
+                        <div class="result-value" id="obs_result">0.0000</div>
+                    </div>
+                </div>
+                
+                <!-- 2. PathFollowCritic -->
+                <div class="critic-card" id="card-pf">
+                    <div class="critic-title">2. PathFollowCritic (路径跟随)</div>
+                    <div class="formula">
+                        <div class="formula-math">
+                            dist = √[(x<sub>end</sub>-x<sub>ref</sub>)² + (y<sub>end</sub>-y<sub>ref</sub>)²]<br>
+                            cost = w<sub>pf</sub> · dist
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>权重 w<sub>pf</sub></label>
+                        <input type="number" id="pf_weight" value="5.0" step="0.5" oninput="calculateAll()">
+                    </div>
+                    <div class="input-group">
+                        <label>轨迹终点偏离 (m)</label>
+                        <input type="number" id="pf_deviation" value="0.1" step="0.05" oninput="calculateAll()">
+                    </div>
+                    <div class="result">
+                        <div class="result-label">代价值</div>
+                        <div class="result-value" id="pf_result">0.0000</div>
+                    </div>
+                </div>
+                
+                <!-- 3. PathAlignCritic -->
+                <div class="critic-card" id="card-pa">
+                    <div class="critic-title">3. PathAlignCritic (路径对齐)</div>
+                    <div class="formula">
+                        <div class="formula-math">
+                            cost = w<sub>pa</sub> · (1/N)Σdist<sub>j</sub><br>
+                            dist<sub>j</sub> = √[(x<sub>j</sub>-x<sub>path</sub>)² + (y<sub>j</sub>-y<sub>path</sub>)²]
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>权重 w<sub>pa</sub></label>
+                        <input type="number" id="pa_weight" value="10.0" step="0.5" oninput="calculateAll()">
+                    </div>
+                    <div class="input-group">
+                        <label>平均路径偏离 (m)</label>
+                        <input type="number" id="pa_deviation" value="0.15" step="0.05" oninput="calculateAll()">
+                    </div>
+                    <div class="result">
+                        <div class="result-label">代价值</div>
+                        <div class="result-value" id="pa_result">0.0000</div>
+                    </div>
+                </div>
+                
+                <!-- 4. PathAngleCritic -->
+                <div class="critic-card" id="card-pang">
+                    <div class="critic-title">4. PathAngleCritic (路径角度)</div>
+                    <div class="formula">
+                        <div class="formula-math">
+                            if Δθ > θ<sub>max</sub>:<br>
+                            cost = w<sub>pang</sub> · Δθ
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>权重 w<sub>pang</sub></label>
+                        <input type="number" id="pang_weight" value="5.0" step="0.5" oninput="calculateAll()">
+                    </div>
+                    <div class="input-group">
+                        <label>最大允许角度 θ<sub>max</sub> (rad)</label>
+                        <input type="number" id="pang_max" value="0.15" step="0.05" oninput="calculateAll()">
+                    </div>
+                    <div class="input-group">
+                        <label>朝向偏差 Δθ (rad)</label>
+                        <input type="number" id="pang_diff" value="0.05" step="0.05" oninput="calculateAll()">
+                    </div>
+                    <div class="result">
+                        <div class="result-label">代价值</div>
+                        <div class="result-value" id="pang_result">0.0000</div>
+                    </div>
+                </div>
+                
+                <!-- 5. GoalCritic -->
+                <div class="critic-card" id="card-goal">
+                    <div class="critic-title">5. GoalCritic (目标点)</div>
+                    <div class="formula">
+                        <div class="formula-math">
+                            cost = w<sub>g</sub> · dist²
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>权重 w<sub>g</sub></label>
+                        <input type="number" id="goal_weight" value="5.0" step="0.5" oninput="calculateAll()">
+                    </div>
+                    <div class="input-group">
+                        <label>到目标距离 (m)</label>
+                        <input type="number" id="goal_dist" value="0.3" step="0.1" oninput="calculateAll()">
+                    </div>
+                    <div class="result">
+                        <div class="result-label">代价值</div>
+                        <div class="result-value" id="goal_result">0.0000</div>
+                    </div>
+                </div>
+                
+                <!-- 6. GoalAngleCritic -->
+                <div class="critic-card" id="card-ga">
+                    <div class="critic-title">6. GoalAngleCritic (目标角度)</div>
+                    <div class="formula">
+                        <div class="formula-math">
+                            cost = w<sub>ga</sub> · Δθ²
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>权重 w<sub>ga</sub></label>
+                        <input type="number" id="ga_weight" value="3.0" step="0.5" oninput="calculateAll()">
+                    </div>
+                    <div class="input-group">
+                        <label>目标朝向偏差 Δθ (rad)</label>
+                        <input type="number" id="ga_diff" value="0.1" step="0.05" oninput="calculateAll()">
+                    </div>
+                    <div class="result">
+                        <div class="result-label">代价值</div>
+                        <div class="result-value" id="ga_result">0.0000</div>
+                    </div>
+                </div>
+                
+                <!-- 7. PreferForwardCritic -->
+                <div class="critic-card" id="card-pfwd">
+                    <div class="critic-title">7. PreferForwardCritic (偏好前进)</div>
+                    <div class="formula">
+                        <div class="formula-math">
+                            cost = w<sub>pfwd</sub> · Σ|v<sub>x</sub>| (v<sub>x</sub> < 0)
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>权重 w<sub>pfwd</sub></label>
+                        <input type="number" id="pfwd_weight" value="3.0" step="0.5" oninput="calculateAll()">
+                    </div>
+                    <div class="input-group">
+                        <label>倒车速度累加 (m/s)</label>
+                        <input type="number" id="pfwd_backward" value="0.0" step="0.1" oninput="calculateAll()">
+                    </div>
+                    <div class="result">
+                        <div class="result-label">代价值</div>
+                        <div class="result-value" id="pfwd_result">0.0000</div>
+                    </div>
+                </div>
+                
+                <!-- 8. ConstraintCritic -->
+                <div class="critic-card" id="card-constr">
+                    <div class="critic-title">8. ConstraintCritic (约束代价)</div>
+                    <div class="formula">
+                        <div class="formula-math">
+                            cost = w<sub>c</sub> · (vx<sub>viol</sub> + wz<sub>viol</sub>) · dt
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>权重 w<sub>c</sub></label>
+                        <input type="number" id="constr_weight" value="3.0" step="0.5" oninput="calculateAll()">
+                    </div>
+                    <div class="input-group">
+                        <label>最大线速度 vx<sub>max</sub></label>
+                        <input type="number" id="constr_vxmax" value="1.2" step="0.1" oninput="calculateAll()">
+                    </div>
+                    <div class="input-group">
+                        <label>最大角速度 wz<sub>max</sub></label>
+                        <input type="number" id="constr_wzmax" value="2.0" step="0.1" oninput="calculateAll()">
+                    </div>
+                    <div class="input-group">
+                        <label>当前 vx (m/s)</label>
+                        <input type="number" id="constr_vx" value="0.8" step="0.1" oninput="calculateAll()">
+                    </div>
+                    <div class="input-group">
+                        <label>当前 wz (rad/s)</label>
+                        <input type="number" id="constr_wz" value="0.5" step="0.1" oninput="calculateAll()">
+                    </div>
+                    <div class="result">
+                        <div class="result-label">代价值</div>
+                        <div class="result-value" id="constr_result">0.0000</div>
+                    </div>
+                </div>
+                
+                <!-- 9. TwirlingCritic -->
+                <div class="critic-card" id="card-twirl">
+                    <div class="critic-title">9. TwirlingCritic (旋转惩罚)</div>
+                    <div class="formula">
+                        <div class="formula-math">
+                            cost = w<sub>twirl</sub> · (1 - v<sub>x</sub>/vx<sub>max</sub>) · |w<sub>z</sub>|
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>权重 w<sub>twirl</sub></label>
+                        <input type="number" id="twirl_weight" value="0.5" step="0.1" oninput="calculateAll()">
+                    </div>
+                    <div class="input-group">
+                        <label>vx<sub>max</sub> (归一化)</label>
+                        <input type="number" id="twirl_vxmax" value="1.2" step="0.1" oninput="calculateAll()">
+                    </div>
+                    <div class="input-group">
+                        <label>当前 vx (m/s)</label>
+                        <input type="number" id="twirl_vx" value="0.8" step="0.1" oninput="calculateAll()">
+                    </div>
+                    <div class="input-group">
+                        <label>当前 wz (rad/s)</label>
+                        <input type="number" id="twirl_wz" value="0.2" step="0.1" oninput="calculateAll()">
+                    </div>
+                    <div class="result">
+                        <div class="result-label">代价值</div>
+                        <div class="result-value" id="twirl_result">0.0000</div>
+                    </div>
+                </div>
+                
+                <!-- 10. VelocityDeadbandCritic -->
+                <div class="critic-card" id="card-vd">
+                    <div class="critic-title">10. VelocityDeadbandCritic (速度死区)</div>
+                    <div class="formula">
+                        <div class="formula-math">
+                            cost = w<sub>vd</sub> · Σmax(0, db - |v|) · dt
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>权重 w<sub>vd</sub></label>
+                        <input type="number" id="vd_weight" value="0.5" step="0.1" oninput="calculateAll()">
+                    </div>
+                    <div class="input-group">
+                        <label>vx死区 (m/s)</label>
+                        <input type="number" id="vd_dbx" value="0.05" step="0.01" oninput="calculateAll()">
+                    </div>
+                    <div class="input-group">
+                        <label>wz死区 (rad/s)</label>
+                        <input type="number" id="vd_dbwz" value="0.1" step="0.01" oninput="calculateAll()">
+                    </div>
+                    <div class="input-group">
+                        <label>当前 vx (m/s)</label>
+                        <input type="number" id="vd_vx" value="0.8" step="0.1" oninput="calculateAll()">
+                    </div>
+                    <div class="input-group">
+                        <label>当前 wz (rad/s)</label>
+                        <input type="number" id="vd_wz" value="0.2" step="0.1" oninput="calculateAll()">
+                    </div>
+                    <div class="result">
+                        <div class="result-label">代价值</div>
+                        <div class="result-value" id="vd_result">0.0000</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="total-section">
+                <div class="total-title">📊 总代价</div>
+                <div class="total-value" id="total_cost">0.0000</div>
+                <div class="cost-breakdown" id="costBreakdown"></div>
+            </div>
+        </div>
+        
+        <!-- 可视化标签页 -->
+        <div id="tab-visualization" class="tab-content">
+            <div class="viz-section">
+                <div class="viz-title">📈 代价随参数变化曲线</div>
+                <div class="control-panel">
+                    <h3>选择要分析的批评函数</h3>
+                    <select id="vizCriticSelect" onchange="updateVizChart()">
+                        <option value="obs">ObstaclesCritic (障碍物)</option>
+                        <option value="pf">PathFollowCritic (路径跟随)</option>
+                        <option value="pa">PathAlignCritic (路径对齐)</option>
+                        <option value="pang">PathAngleCritic (路径角度)</option>
+                        <option value="goal">GoalCritic (目标点)</option>
+                        <option value="ga">GoalAngleCritic (目标角度)</option>
+                        <option value="pfwd">PreferForwardCritic (偏好前进)</option>
+                        <option value="constr">ConstraintCritic (约束)</option>
+                        <option value="twirl">TwirlingCritic (旋转惩罚)</option>
+                        <option value="vd">VelocityDeadbandCritic (速度死区)</option>
+                    </select>
+                </div>
+                <div class="viz-grid">
+                    <div>
+                        <div class="chart-container">
+                            <canvas id="costCurveChart"></canvas>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="chart-container">
+                            <canvas id="costPieChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 敏感性分析标签页 -->
+        <div id="tab-sensitivity" class="tab-content">
+            <div class="viz-section">
+                <div class="viz-title">🔍 参数敏感性分析</div>
+                <p style="text-align: center; color: #666; margin-bottom: 20px;">
+                    显示每个参数变化±20%时，总代价的变化程度
+                </p>
+                <table class="sensitivity-table">
+                    <thead>
+                        <tr>
+                            <th>参数</th>
+                            <th>当前值</th>
+                            <th>敏感度</th>
+                            <th>可视化</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sensitivityTableBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- 导出/导入区域 -->
+        <div class="export-import-section">
+            <h3 style="margin-bottom: 20px;">💾 配置管理</h3>
+            
+            <div style="margin-bottom: 20px;">
+                <h4 style="color: #667eea; margin-bottom: 10px;">📤 导出配置</h4>
+                <button class="action-btn" onclick="exportConfig('json')">导出 JSON</button>
+                <button class="action-btn" onclick="exportConfig('yaml')">导出 YAML</button>
+                <button class="action-btn" onclick="generateReport()">📋 生成报告</button>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <h4 style="color: #667eea; margin-bottom: 10px;">📥 导入配置</h4>
+                <button class="action-btn" onclick="document.getElementById('importFile').click()">导入 JSON/YAML</button>
+                <input type="file" id="importFile" style="display: none;" accept=".json,.yaml,.yml" onchange="importConfig(event)">
+            </div>
+            
+            <div>
+                <button class="action-btn" onclick="resetToDefault()" style="background: #e74c3c;">🔄 恢复默认</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const MODEL_DT = 0.05;
+        let costCurveChart = null;
+        let costPieChart = null;
+        
+        // 存储当前所有代价值
+        let currentCosts = {};
+        
+        function calculateAll() {
+            // 1. ObstaclesCritic
+            const obs_w_rep = parseFloat(document.getElementById('obs_w_rep').value) || 0;
+            const obs_k = parseFloat(document.getElementById('obs_k').value) || 1;
+            const obs_margin = parseFloat(document.getElementById('obs_margin').value) || 0;
+            const obs_inflation = parseFloat(document.getElementById('obs_inflation').value) || 0;
+            const obs_dist = parseFloat(document.getElementById('obs_dist').value) || 999;
+            
+            let obs_cost = 0;
+            if (obs_dist < obs_margin) {
+                obs_cost = Infinity;
+            } else if (obs_dist < obs_inflation) {
+                const d = obs_dist - obs_margin;
+                obs_cost = obs_w_rep * Math.exp(-obs_k * d);
+            }
+            currentCosts.obs = obs_cost;
+            document.getElementById('obs_result').textContent = obs_cost === Infinity ? '∞ (碰撞)' : obs_cost.toFixed(4);
+            
+            // 2. PathFollowCritic
+            const pf_weight = parseFloat(document.getElementById('pf_weight').value) || 0;
+            const pf_deviation = parseFloat(document.getElementById('pf_deviation').value) || 0;
+            const pf_cost = pf_weight * pf_deviation;
+            currentCosts.pf = pf_cost;
+            document.getElementById('pf_result').textContent = pf_cost.toFixed(4);
+            
+            // 3. PathAlignCritic
+            const pa_weight = parseFloat(document.getElementById('pa_weight').value) || 0;
+            const pa_deviation = parseFloat(document.getElementById('pa_deviation').value) || 0;
+            const pa_cost = pa_weight * pa_deviation;
+            currentCosts.pa = pa_cost;
+            document.getElementById('pa_result').textContent = pa_cost.toFixed(4);
+            
+            // 4. PathAngleCritic
+            const pang_weight = parseFloat(document.getElementById('pang_weight').value) || 0;
+            const pang_max = parseFloat(document.getElementById('pang_max').value) || 0;
+            const pang_diff = parseFloat(document.getElementById('pang_diff').value) || 0;
+            const pang_cost = pang_diff > pang_max ? pang_weight * pang_diff : 0;
+            currentCosts.pang = pang_cost;
+            document.getElementById('pang_result').textContent = pang_cost.toFixed(4);
+            
+            // 5. GoalCritic
+            const goal_weight = parseFloat(document.getElementById('goal_weight').value) || 0;
+            const goal_dist = parseFloat(document.getElementById('goal_dist').value) || 0;
+            const goal_cost = goal_weight * goal_dist * goal_dist;
+            currentCosts.goal = goal_cost;
+            document.getElementById('goal_result').textContent = goal_cost.toFixed(4);
+            
+            // 6. GoalAngleCritic
+            const ga_weight = parseFloat(document.getElementById('ga_weight').value) || 0;
+            const ga_diff = parseFloat(document.getElementById('ga_diff').value) || 0;
+            const ga_cost = ga_weight * ga_diff * ga_diff;
+            currentCosts.ga = ga_cost;
+            document.getElementById('ga_result').textContent = ga_cost.toFixed(4);
+            
+            // 7. PreferForwardCritic
+            const pfwd_weight = parseFloat(document.getElementById('pfwd_weight').value) || 0;
+            const pfwd_backward = parseFloat(document.getElementById('pfwd_backward').value) || 0;
+            const pfwd_cost = pfwd_weight * pfwd_backward;
+            currentCosts.pfwd = pfwd_cost;
+            document.getElementById('pfwd_result').textContent = pfwd_cost.toFixed(4);
+            
+            // 8. ConstraintCritic
+            const constr_weight = parseFloat(document.getElementById('constr_weight').value) || 0;
+            const constr_vxmax = parseFloat(document.getElementById('constr_vxmax').value) || 0;
+            const constr_wzmax = parseFloat(document.getElementById('constr_wzmax').value) || 0;
+            const constr_vx = parseFloat(document.getElementById('constr_vx').value) || 0;
+            const constr_wz = parseFloat(document.getElementById('constr_wz').value) || 0;
+            const vx_violation = Math.max(0, constr_vx - constr_vxmax);
+            const wz_violation = Math.max(0, Math.abs(constr_wz) - constr_wzmax);
+            const constr_cost = constr_weight * (vx_violation + wz_violation) * MODEL_DT;
+            currentCosts.constr = constr_cost;
+            document.getElementById('constr_result').textContent = constr_cost.toFixed(4);
+            
+            // 9. TwirlingCritic
+            const twirl_weight = parseFloat(document.getElementById('twirl_weight').value) || 0;
+            const twirl_vxmax = parseFloat(document.getElementById('twirl_vxmax').value) || 1;
+            const twirl_vx = parseFloat(document.getElementById('twirl_vx').value) || 0;
+            const twirl_wz = parseFloat(document.getElementById('twirl_wz').value) || 0;
+            const forward_ratio = Math.max(0, Math.min(twirl_vx / twirl_vxmax, 1));
+            const spin_penalty = (1 - forward_ratio) * Math.abs(twirl_wz);
+            const twirl_cost = twirl_weight * spin_penalty;
+            currentCosts.twirl = twirl_cost;
+            document.getElementById('twirl_result').textContent = twirl_cost.toFixed(4);
+            
+            // 10. VelocityDeadbandCritic
+            const vd_weight = parseFloat(document.getElementById('vd_weight').value) || 0;
+            const vd_dbx = parseFloat(document.getElementById('vd_dbx').value) || 0;
+            const vd_dbwz = parseFloat(document.getElementById('vd_dbwz').value) || 0;
+            const vd_vx = parseFloat(document.getElementById('vd_vx').value) || 0;
+            const vd_wz = parseFloat(document.getElementById('vd_wz').value) || 0;
+            const vx_penalty = Math.max(0, vd_dbx - Math.abs(vd_vx));
+            const wz_penalty = Math.max(0, vd_dbwz - Math.abs(vd_wz));
+            const vd_cost = vd_weight * (vx_penalty + wz_penalty) * MODEL_DT;
+            currentCosts.vd = vd_cost;
+            document.getElementById('vd_result').textContent = vd_cost.toFixed(4);
+            
+            // Total
+            const total = (obs_cost === Infinity ? 999999 : obs_cost) + pf_cost + pa_cost + pang_cost + 
+                         goal_cost + ga_cost + pfwd_cost + constr_cost + twirl_cost + vd_cost;
+            document.getElementById('total_cost').textContent = total.toFixed(4);
+            
+            // 更新代价分解
+            updateCostBreakdown();
+            
+            // 高亮最大代价项
+            highlightMaxCost();
+            
+            // 如果可视化标签页激活，更新图表
+            if (document.getElementById('tab-visualization').classList.contains('active')) {
+                updateVizChart();
+            }
+            
+            // 如果敏感性标签页激活，更新分析
+            if (document.getElementById('tab-sensitivity').classList.contains('active')) {
+                updateSensitivityAnalysis();
+            }
+        }
+        
+        function updateCostBreakdown() {
+            const container = document.getElementById('costBreakdown');
+            const colors = {
+                obs: '#ff6b6b', pf: '#4ecdc4', pa: '#45b7d1', pang: '#96ceb4',
+                goal: '#ffeaa7', ga: '#dfe6e9', pfwd: '#fd79a8', constr: '#a29bfe',
+                twirl: '#fdcb6e', vd: '#6c5ce7'
+            };
+            const names = {
+                obs: '障碍物', pf: '路径跟随', pa: '路径对齐', pang: '路径角度',
+                goal: '目标点', ga: '目标角度', pfwd: '偏好前进', constr: '约束',
+                twirl: '旋转惩罚', vd: '速度死区'
+            };
+            
+            let html = '';
+            for (const [key, cost] of Object.entries(currentCosts)) {
+                if (cost > 0.001) {
+                    html += `<div class="cost-item">
+                        <div class="cost-color" style="background: ${colors[key]}"></div>
+                        <span>${names[key]}: ${cost.toFixed(2)}</span>
+                    </div>`;
+                }
+            }
+            container.innerHTML = html;
+        }
+        
+        function highlightMaxCost() {
+            // 移除所有高亮
+            document.querySelectorAll('.critic-card').forEach(card => {
+                card.classList.remove('highlight-card');
+            });
+            
+            // 找到最大代价（排除Infinity）
+            let maxCost = -1;
+            let maxKey = '';
+            for (const [key, cost] of Object.entries(currentCosts)) {
+                if (cost !== Infinity && cost > maxCost) {
+                    maxCost = cost;
+                    maxKey = key;
+                }
+            }
+            
+            // 高亮最大代价卡片
+            if (maxKey && maxCost > 0.1) {
+                const card = document.getElementById('card-' + maxKey);
+                if (card) card.classList.add('highlight-card');
+            }
+        }
+        
+        function loadPreset(scenario) {
+            switch(scenario) {
+                case 'normal':
+                    document.getElementById('obs_dist').value = '0.8';
+                    document.getElementById('pf_deviation').value = '0.1';
+                    document.getElementById('pa_deviation').value = '0.1';
+                    document.getElementById('pang_diff').value = '0.05';
+                    document.getElementById('twirl_vx').value = '0.8';
+                    document.getElementById('twirl_wz').value = '0.2';
+                    document.getElementById('vd_vx').value = '0.8';
+                    document.getElementById('vd_wz').value = '0.2';
+                    document.getElementById('goal_dist').value = '2.0';
+                    break;
+                case 'avoidance':
+                    document.getElementById('obs_dist').value = '0.45';
+                    document.getElementById('pf_deviation').value = '0.3';
+                    document.getElementById('pa_deviation').value = '0.2';
+                    document.getElementById('pang_diff').value = '0.2';
+                    document.getElementById('twirl_vx').value = '0.3';
+                    document.getElementById('twirl_wz').value = '0.8';
+                    document.getElementById('vd_vx').value = '0.3';
+                    document.getElementById('vd_wz').value = '0.8';
+                    document.getElementById('goal_dist').value = '1.5';
+                    break;
+                case 'goal':
+                    document.getElementById('goal_dist').value = '0.3';
+                    document.getElementById('ga_diff').value = '0.15';
+                    document.getElementById('obs_dist').value = '1.0';
+                    document.getElementById('pf_deviation').value = '0.05';
+                    document.getElementById('twirl_vx').value = '0.2';
+                    document.getElementById('twirl_wz').value = '0.5';
+                    break;
+                case 'spinning':
+                    document.getElementById('twirl_vx').value = '0.05';
+                    document.getElementById('twirl_wz').value = '1.5';
+                    document.getElementById('obs_dist').value = '0.5';
+                    document.getElementById('pf_deviation').value = '0.2';
+                    document.getElementById('vd_vx').value = '0.05';
+                    document.getElementById('vd_wz').value = '1.5';
+                    break;
+                case 'narrow':
+                    document.getElementById('obs_dist').value = '0.35';
+                    document.getElementById('pf_deviation').value = '0.05';
+                    document.getElementById('pa_deviation').value = '0.03';
+                    document.getElementById('pang_diff').value = '0.02';
+                    document.getElementById('twirl_vx').value = '0.4';
+                    document.getElementById('twirl_wz').value = '0.3';
+                    document.getElementById('pfwd_backward').value = '0.0';
+                    break;
+            }
+            calculateAll();
+        }
+        
+        function switchTab(tabName) {
+            // 更新按钮状态
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // 更新内容显示
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById('tab-' + tabName).classList.add('active');
+            
+            // 如果切换到可视化或敏感性标签页，更新图表
+            if (tabName === 'visualization') {
+                setTimeout(updateVizChart, 100);
+            } else if (tabName === 'sensitivity') {
+                setTimeout(updateSensitivityAnalysis, 100);
+            }
+        }
+        
+        function updateVizChart() {
+            const critic = document.getElementById('vizCriticSelect').value;
+            
+            // 生成曲线数据
+            const labels = [];
+            const data = [];
+            
+            // 根据选择的批评函数生成不同的X轴范围和计算逻辑
+            let xRange, xLabel, calculateFn;
+            
+            switch(critic) {
+                case 'obs':
+                    xRange = [0.1, 1.5];
+                    xLabel = '到障碍物距离 (m)';
+                    calculateFn = (x) => {
+                        const w = parseFloat(document.getElementById('obs_w_rep').value) || 1;
+                        const k = parseFloat(document.getElementById('obs_k').value) || 6;
+                        const margin = parseFloat(document.getElementById('obs_margin').value) || 0.4;
+                        const inflation = parseFloat(document.getElementById('obs_inflation').value) || 0.8;
+                        if (x < margin) return 10000;
+                        if (x < inflation) return w * Math.exp(-k * (x - margin));
+                        return 0;
+                    };
+                    break;
+                case 'pf':
+                    xRange = [0, 1.0];
+                    xLabel = '路径偏离 (m)';
+                    calculateFn = (x) => {
+                        const w = parseFloat(document.getElementById('pf_weight').value) || 5;
+                        return w * x;
+                    };
+                    break;
+                case 'pa':
+                    xRange = [0, 0.5];
+                    xLabel = '平均路径偏离 (m)';
+                    calculateFn = (x) => {
+                        const w = parseFloat(document.getElementById('pa_weight').value) || 10;
+                        return w * x;
+                    };
+                    break;
+                case 'pang':
+                    xRange = [0, 1.0];
+                    xLabel = '朝向偏差 (rad)';
+                    calculateFn = (x) => {
+                        const w = parseFloat(document.getElementById('pang_weight').value) || 5;
+                        const max = parseFloat(document.getElementById('pang_max').value) || 0.15;
+                        return x > max ? w * x : 0;
+                    };
+                    break;
+                case 'goal':
+                    xRange = [0, 1.0];
+                    xLabel = '到目标距离 (m)';
+                    calculateFn = (x) => {
+                        const w = parseFloat(document.getElementById('goal_weight').value) || 5;
+                        return w * x * x;
+                    };
+                    break;
+                case 'ga':
+                    xRange = [0, 1.0];
+                    xLabel = '目标朝向偏差 (rad)';
+                    calculateFn = (x) => {
+                        const w = parseFloat(document.getElementById('ga_weight').value) || 3;
+                        return w * x * x;
+                    };
+                    break;
+                case 'twirl':
+                    xRange = [0, 1.2];
+                    xLabel = '前进速度 vx (m/s)';
+                    calculateFn = (x) => {
+                        const w = parseFloat(document.getElementById('twirl_weight').value) || 0.5;
+                        const vxmax = parseFloat(document.getElementById('twirl_vxmax').value) || 1.2;
+                        const wz = parseFloat(document.getElementById('twirl_wz').value) || 0.2;
+                        const ratio = Math.max(0, Math.min(x / vxmax, 1));
+                        return w * (1 - ratio) * Math.abs(wz);
+                    };
+                    break;
+                default:
+                    xRange = [0, 1];
+                    xLabel = '参数值';
+                    calculateFn = (x) => x;
+            }
+            
+            for (let i = 0; i <= 50; i++) {
+                const x = xRange[0] + (xRange[1] - xRange[0]) * i / 50;
+                labels.push(x.toFixed(2));
+                data.push(calculateFn(x));
+            }
+            
+            // 更新或创建曲线图
+            const ctx = document.getElementById('costCurveChart').getContext('2d');
+            if (costCurveChart) costCurveChart.destroy();
+            
+            costCurveChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '代价值',
+                        data: data,
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: '代价随' + xLabel + '变化曲线'
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: xLabel
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: '代价值'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // 更新饼图
+            const pieCtx = document.getElementById('costPieChart').getContext('2d');
+            if (costPieChart) costPieChart.destroy();
+            
+            const pieData = Object.values(currentCosts).map(v => v === Infinity ? 10000 : v);
+            const pieLabels = ['障碍物', '路径跟随', '路径对齐', '路径角度', '目标点', '目标角度', '偏好前进', '约束', '旋转惩罚', '速度死区'];
+            const pieColors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7', '#dfe6e9', '#fd79a8', '#a29bfe', '#fdcb6e', '#6c5ce7'];
+            
+            costPieChart = new Chart(pieCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: pieLabels,
+                    datasets: [{
+                        data: pieData,
+                        backgroundColor: pieColors
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: '各批评函数代价占比'
+                        },
+                        legend: {
+                            position: 'right'
+                        }
+                    }
+                }
+            });
+        }
+        
+        function updateSensitivityAnalysis() {
+            const tbody = document.getElementById('sensitivityTableBody');
+            tbody.innerHTML = '';
+            
+            // 定义要分析的参数
+            const params = [
+                { id: 'obs_w_rep', name: '障碍物排斥权重', value: parseFloat(document.getElementById('obs_w_rep').value) },
+                { id: 'obs_k', name: '障碍物代价缩放', value: parseFloat(document.getElementById('obs_k').value) },
+                { id: 'pf_weight', name: '路径跟随权重', value: parseFloat(document.getElementById('pf_weight').value) },
+                { id: 'pa_weight', name: '路径对齐权重', value: parseFloat(document.getElementById('pa_weight').value) },
+                { id: 'pang_weight', name: '路径角度权重', value: parseFloat(document.getElementById('pang_weight').value) },
+                { id: 'goal_weight', name: '目标点权重', value: parseFloat(document.getElementById('goal_weight').value) },
+                { id: 'twirl_weight', name: '旋转惩罚权重', value: parseFloat(document.getElementById('twirl_weight').value) }
+            ];
+            
+            // 计算基准总代价
+            const baseTotal = Object.values(currentCosts).reduce((a, b) => a + (b === Infinity ? 10000 : b), 0);
+            
+            params.forEach(param => {
+                if (isNaN(param.value) || param.value === 0) return;
+                
+                // 计算变化后的代价
+                const newValue = param.value * 1.2;
+                document.getElementById(param.id).value = newValue.toFixed(2);
+                calculateAll();
+                const newTotal = Object.values(currentCosts).reduce((a, b) => a + (b === Infinity ? 10000 : b), 0);
+                
+                // 恢复原始值
+                document.getElementById(param.id).value = param.value.toFixed(2);
+                calculateAll();
+                
+                // 计算敏感度
+                const sensitivity = Math.abs((newTotal - baseTotal) / baseTotal * 100);
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${param.name}</td>
+                    <td>${param.value.toFixed(2)}</td>
+                    <td>${sensitivity.toFixed(2)}%</td>
+                    <td>
+                        <div class="sensitivity-bar" style="width: ${Math.min(sensitivity * 5, 100)}%"></div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+        
+        function exportConfig(format) {
+            const config = {};
+            document.querySelectorAll('input[type="number"]').forEach(input => {
+                config[input.id] = parseFloat(input.value);
+            });
+            
+            if (format === 'json') {
+                const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'mppi_cost_config.json';
+                a.click();
+                URL.revokeObjectURL(url);
+            } else if (format === 'yaml') {
+                const yamlContent = generateYAML(config);
+                const blob = new Blob([yamlContent], { type: 'application/x-yaml' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'mppi_cost_config.yaml';
+                a.click();
+                URL.revokeObjectURL(url);
+            }
+        }
+        
+        function generateYAML(config) {
+            let yaml = '# MPPI 批评函数参数配置\n';
+            yaml += '# 生成时间: ' + new Date().toLocaleString() + '\n\n';
+            
+            // ObstaclesCritic
+            yaml += '# 1. ObstaclesCritic (障碍物代价)\n';
+            yaml += 'obstacle_repulsion_weight: ' + config.obs_w_rep + '\n';
+            yaml += 'obstacle_cost_scaling: ' + config.obs_k + '\n';
+            yaml += 'obstacle_collision_margin: ' + config.obs_margin + '\n';
+            yaml += 'obstacle_inflation_radius: ' + config.obs_inflation + '\n\n';
+            
+            // PathFollowCritic
+            yaml += '# 2. PathFollowCritic (路径跟随代价)\n';
+            yaml += 'path_follow_weight: ' + config.pf_weight + '\n';
+            yaml += 'path_follow_deviation: ' + config.pf_deviation + '\n\n';
+            
+            // PathAlignCritic
+            yaml += '# 3. PathAlignCritic (路径对齐代价)\n';
+            yaml += 'path_align_weight: ' + config.pa_weight + '\n';
+            yaml += 'path_align_deviation: ' + config.pa_deviation + '\n\n';
+            
+            // PathAngleCritic
+            yaml += '# 4. PathAngleCritic (路径角度代价)\n';
+            yaml += 'path_angle_weight: ' + config.pang_weight + '\n';
+            yaml += 'path_angle_max: ' + config.pang_max + '\n';
+            yaml += 'path_angle_diff: ' + config.pang_diff + '\n\n';
+            
+            // GoalCritic
+            yaml += '# 5. GoalCritic (目标点代价)\n';
+            yaml += 'goal_weight: ' + config.goal_weight + '\n';
+            yaml += 'goal_distance: ' + config.goal_dist + '\n\n';
+            
+            // GoalAngleCritic
+            yaml += '# 6. GoalAngleCritic (目标角度代价)\n';
+            yaml += 'goal_angle_weight: ' + config.ga_weight + '\n';
+            yaml += 'goal_angle_diff: ' + config.ga_diff + '\n\n';
+            
+            // PreferForwardCritic
+            yaml += '# 7. PreferForwardCritic (偏好前进代价)\n';
+            yaml += 'prefer_forward_weight: ' + config.pfwd_weight + '\n';
+            yaml += 'prefer_forward_backward: ' + config.pfwd_backward + '\n\n';
+            
+            // ConstraintCritic
+            yaml += '# 8. ConstraintCritic (约束代价)\n';
+            yaml += 'constraint_weight: ' + config.constr_weight + '\n';
+            yaml += 'vx_max: ' + config.constr_vxmax + '\n';
+            yaml += 'wz_max: ' + config.constr_wzmax + '\n';
+            yaml += 'current_vx: ' + config.constr_vx + '\n';
+            yaml += 'current_wz: ' + config.constr_wz + '\n\n';
+            
+            // TwirlingCritic
+            yaml += '# 9. TwirlingCritic (旋转惩罚代价)\n';
+            yaml += 'twirling_weight: ' + config.twirl_weight + '\n';
+            yaml += 'twirling_vx_max: ' + config.twirl_vxmax + '\n';
+            yaml += 'current_vx: ' + config.twirl_vx + '\n';
+            yaml += 'current_wz: ' + config.twirl_wz + '\n\n';
+            
+            // VelocityDeadbandCritic
+            yaml += '# 10. VelocityDeadbandCritic (速度死区代价)\n';
+            yaml += 'velocity_deadband_weight: ' + config.vd_weight + '\n';
+            yaml += 'velocity_deadband_vx: ' + config.vd_dbx + '\n';
+            yaml += 'velocity_deadband_wz: ' + config.vd_dbwz + '\n';
+            yaml += 'current_vx: ' + config.vd_vx + '\n';
+            yaml += 'current_wz: ' + config.vd_wz + '\n';
+            
+            return yaml;
+        }
+        
+        function importConfig(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const content = e.target.result;
+                    let config;
+                    
+                    // 根据文件扩展名判断格式
+                    if (file.name.endsWith('.json')) {
+                        config = JSON.parse(content);
+                    } else if (file.name.endsWith('.yaml') || file.name.endsWith('.yml')) {
+                        config = parseYAML(content);
+                    } else {
+                        throw new Error('不支持的文件格式');
+                    }
+                    
+                    // 应用配置
+                    for (const [id, value] of Object.entries(config)) {
+                        const input = document.getElementById(id);
+                        if (input) input.value = value;
+                    }
+                    calculateAll();
+                    alert('配置导入成功！');
+                } catch (err) {
+                    alert('配置文件格式错误: ' + err.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+        
+        function parseYAML(yamlContent) {
+            const config = {};
+            const lines = yamlContent.split('\n');
+            
+            // YAML到input ID的映射
+            const yamlToId = {
+                'obstacle_repulsion_weight': 'obs_w_rep',
+                'obstacle_cost_scaling': 'obs_k',
+                'obstacle_collision_margin': 'obs_margin',
+                'obstacle_inflation_radius': 'obs_inflation',
+                'path_follow_weight': 'pf_weight',
+                'path_follow_deviation': 'pf_deviation',
+                'path_align_weight': 'pa_weight',
+                'path_align_deviation': 'pa_deviation',
+                'path_angle_weight': 'pang_weight',
+                'path_angle_max': 'pang_max',
+                'path_angle_diff': 'pang_diff',
+                'goal_weight': 'goal_weight',
+                'goal_distance': 'goal_dist',
+                'goal_angle_weight': 'ga_weight',
+                'goal_angle_diff': 'ga_diff',
+                'prefer_forward_weight': 'pfwd_weight',
+                'prefer_forward_backward': 'pfwd_backward',
+                'constraint_weight': 'constr_weight',
+                'vx_max': 'constr_vxmax',
+                'wz_max': 'constr_wzmax',
+                'current_vx': 'constr_vx',
+                'current_wz': 'constr_wz',
+                'twirling_weight': 'twirl_weight',
+                'twirling_vx_max': 'twirl_vxmax',
+                'velocity_deadband_weight': 'vd_weight',
+                'velocity_deadband_vx': 'vd_dbx',
+                'velocity_deadband_wz': 'vd_dbwz'
+            };
+            
+            for (const line of lines) {
+                // 跳过注释和空行
+                if (line.trim().startsWith('#') || line.trim() === '') continue;
+                
+                // 解析键值对
+                const match = line.match(/^(\w+):\s*(.+)$/);
+                if (match) {
+                    const key = match[1];
+                    const value = parseFloat(match[2]);
+                    
+                    // 映射到input ID
+                    if (yamlToId[key]) {
+                        config[yamlToId[key]] = value;
+                    }
+                }
+            }
+            
+            return config;
+        }
+        
+        function resetToDefault() {
+            if (confirm('确定要恢复默认配置吗？')) {
+                location.reload();
+            }
+        }
+        
+        function generateReport() {
+            let report = 'MPPI 批评函数代价分析报告\n';
+            report += '=' .repeat(50) + '\n\n';
+            report += `生成时间: ${new Date().toLocaleString()}\n\n`;
+            
+            report += '【各批评函数代价值】\n';
+            const names = {
+                obs: 'ObstaclesCritic (障碍物)', pf: 'PathFollowCritic (路径跟随)',
+                pa: 'PathAlignCritic (路径对齐)', pang: 'PathAngleCritic (路径角度)',
+                goal: 'GoalCritic (目标点)', ga: 'GoalAngleCritic (目标角度)',
+                pfwd: 'PreferForwardCritic (偏好前进)', constr: 'ConstraintCritic (约束)',
+                twirl: 'TwirlingCritic (旋转惩罚)', vd: 'VelocityDeadbandCritic (速度死区)'
+            };
+            
+            for (const [key, cost] of Object.entries(currentCosts)) {
+                report += `${names[key]}: ${cost === Infinity ? '∞ (碰撞)' : cost.toFixed(4)}\n`;
+            }
+            
+            const total = Object.values(currentCosts).reduce((a, b) => a + (b === Infinity ? 10000 : b), 0);
+            report += `\n总代价: ${total.toFixed(4)}\n\n`;
+            
+            report += '【参数配置】\n';
+            document.querySelectorAll('input[type="number"]').forEach(input => {
+                const label = input.previousElementSibling?.textContent || input.id;
+                report += `${label}: ${input.value}\n`;
+            });
+            
+            const blob = new Blob([report], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'mppi_cost_report.txt';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+        
+        // Initialize
+        calculateAll();
+    </script>
+</body>
+</html>
